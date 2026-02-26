@@ -1,15 +1,10 @@
-FROM python:3.11-slim
-
+FROM rust:1-slim-bookworm AS builder
 WORKDIR /app
+COPY . .
+RUN cargo build --release
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY *.py .
-
-ENV PORT=8080
-ENV NODE_ID=vsa01
-
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /app/target/release/dag-vsa01 /usr/local/bin/server
 EXPOSE 8080
-
-CMD ["python", "main.py"]
+CMD ["server"]
